@@ -3,12 +3,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-typedef enum tokenType {  Number, Plus_Operator, Minus_Operator}tokenType;
+typedef enum tokenType {  Number, Plus_Operator, Minus_Operator, Multiply_Operator,
+	                        Divide_Operator, Left_Paren, Right_Paren, Syntax_Error}tokenType;
 
 typedef struct mathToken {
 	tokenType mathType;
 	double value;
 }mathToken;
+
+
 
 mathToken* lexInput(const char* str){
 	unsigned int outputSize = 1;
@@ -68,6 +71,75 @@ mathToken* lexInput(const char* str){
 				currTokenLength = 0;
 			}
 
+			else if(str[i] == '*') {
+				currTokenType = Multiply_Operator;
+				//if we now have more tokens than space in the output array, resize
+				if(currToken >= outputSize) {
+					outputSize*=2;
+					output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+				}
+				output[currToken].mathType = currTokenType;
+
+				printf("Створено новий токен [%i *]\n", output[currToken].mathType);
+
+				currToken++;
+				currTokenLength = 0;
+			}
+
+			else if(str[i] == '/') {
+				currTokenType = Divide_Operator;
+				//if we now have more tokens than space in the output array, resize
+				if(currToken >= outputSize) {
+					outputSize*=2;
+					output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+				}
+				output[currToken].mathType = currTokenType;
+
+				printf("Створено новий токен [%i /]\n", output[currToken].mathType);
+
+				currToken++;
+				currTokenLength = 0;
+			}
+
+			else if(str[i] == '(') {
+				currTokenType = Left_Paren;
+				//if we now have more tokens than space in the output array, resize
+				if(currToken >= outputSize) {
+					outputSize*=2;
+					output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+				}
+				output[currToken].mathType = currTokenType;
+
+				printf("Створено новий токен [%i (]\n", output[currToken].mathType);
+
+				currToken++;
+				currTokenLength = 0;
+			}
+
+			else if(str[i] == ')') {
+				currTokenType = Right_Paren;
+				//if we now have more tokens than space in the output array, resize
+				if(currToken >= outputSize) {
+					outputSize*=2;
+					output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+				}
+				output[currToken].mathType = currTokenType;
+
+				printf("Створено новий токен [%i )]\n", output[currToken].mathType);
+
+				currToken++;
+				currTokenLength = 0;
+			}
+
+			else if(str[i] == ' ') continue;
+
+			else{
+				//TODO: move to a dedicated function
+				printf("[!] SYNTAX ERROR: Unexpected '%c' symbol at %i , exiting\n", str[i], i);
+				mathToken * error = (mathToken *)malloc(sizeof(mathToken));
+				error[0].mathType = Syntax_Error;
+				return error;
+			}
 
 		}
 		//if this isn't the first symbol anymore
@@ -84,8 +156,11 @@ mathToken* lexInput(const char* str){
 					currTokenLength++;
 				}
 
-				//Not a number, so we call it a token
-				else{
+				//TODO
+				//in this case, a right parenthesis can also terminate a number
+				//there's probably a smarter way to do this
+				else if(str[i] == ')') {
+
 					//if we now have more tokens than space in the output array, resize
 					if(currToken >= outputSize) {
 						outputSize*=2;
@@ -102,6 +177,50 @@ mathToken* lexInput(const char* str){
 					currToken++;
 					free(currTokenValueInString);
 					currTokenLength = 0;
+
+
+					currTokenType = Right_Paren;
+					//if we now have more tokens than space in the output array, resize
+					if(currToken >= outputSize) {
+						outputSize*=2;
+						output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+					}
+					output[currToken].mathType = currTokenType;
+
+					printf("Створено новий токен [%i )]\n", output[currToken].mathType);
+
+					currToken++;
+					currTokenLength = 0;
+				}
+
+				//Not a number, so we call it a token (Yes, I will manually append a space
+				//before the null terminator, i'm just not very smart)
+				else if(str[i] == ' ') {
+					//if we now have more tokens than space in the output array, resize
+					if(currToken >= outputSize) {
+						outputSize*=2;
+						output = (mathToken*)realloc(output, sizeof(mathToken) * outputSize);
+					}
+					output[currToken].mathType = currTokenType;
+
+					if(currTokenType == Number) {
+						output[currToken].value = atof(currTokenValueInString);
+					}
+
+					printf("Створено новий токен [%i %lf]\n", output[currToken].mathType, output[currToken].value);
+
+					currToken++;
+					free(currTokenValueInString);
+					currTokenLength = 0;
+				}
+
+
+
+				else{
+					printf("[!] SYNTAX ERROR: Unexpected '%c' symbol at %i , exiting\n", str[i], i);
+					mathToken * error = (mathToken *)malloc(sizeof(mathToken));
+					error[0].mathType = Syntax_Error;
+					return error;
 				}
 			}
 
@@ -128,5 +247,5 @@ char* takeInput(){
 
 int main(){
 	//takeInput();
-	lexInput("5.5 - 7.4123 - 7 + 6 ");
+	lexInput("5.5 - 7.4123 - (7 + 6) * 5 / 8.99 ");
 }
