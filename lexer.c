@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 typedef enum tokenType {  Number, Plus_Operator, Minus_Operator, Multiply_Operator,
 	                        Divide_Operator, Power_Operator,
@@ -27,9 +28,7 @@ mathToken* lexInput(const char* str){
 	unsigned int outputSize = 1;
 	mathToken* output = (mathToken*)malloc(sizeof(mathToken) * outputSize);
 
-	char digits[] = "0123456789";
 	unsigned int length = strlen(str);
-
 
 	unsigned int currToken = 0;
 	unsigned int currTokenLength = 0;
@@ -63,7 +62,7 @@ mathToken* lexInput(const char* str){
 		}
 
 		//If the first symbol of a token is an Number
-		if(strchr(digits, str[i]) != NULL) {
+		if(isdigit(str[i])) {
 			if(currTokenLength == 0) {
 				//just a random size for the token buffer
 				currTokenValueInString = (char*)malloc(currTokenValueSpace);
@@ -223,9 +222,6 @@ mathToken* lexInput(const char* str){
 			}
 
 		}
-
-
-
 
 	}
 
